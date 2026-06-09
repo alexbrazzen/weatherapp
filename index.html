@@ -69,6 +69,10 @@
     <div class="logo">himmel</div>
     <div class="live"><div class="dot"></div><span id="live-text">live</span></div>
   </nav>
+  <div style="padding:12px 20px;border-bottom:0.5px solid rgba(255,255,255,0.07);position:relative;z-index:2;display:flex;gap:8px">
+  <input id="search" type="text" placeholder="Sök stad..." style="flex:1;background:rgba(255,255,255,0.06);border:0.5px solid rgba(255,255,255,0.1);border-radius:20px;padding:8px 16px;font-size:13px;color:#e8eaf0;font-family:'DM Sans',sans-serif;outline:none" onkeydown="if(event.key==='Enter')searchCity()">
+  <button onclick="searchCity()" style="background:rgba(122,179,232,0.15);border:0.5px solid rgba(122,179,232,0.3);border-radius:20px;padding:8px 16px;font-size:13px;color:#c5d8f5;font-family:'DM Sans',sans-serif;cursor:pointer">Sök</button>
+</div>
   <div class="hero">
     <div class="loc">📍 Malmö, Skåne</div>
     <div class="temp" id="temp">–°</div>
