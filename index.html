@@ -14,11 +14,13 @@
     .live{font-size:11px;color:rgba(255,255,255,0.25);display:flex;align-items:center;gap:6px}
     .dot{width:6px;height:6px;background:#5DCAA5;border-radius:50%;animation:pulse 2s infinite}
     .hero{padding:32px 20px 20px;position:relative;z-index:2}
-    .loc{font-size:12px;color:rgba(255,255,255,0.3);margin-bottom:6px}
+    .loc{font-size:12px;color:rgba(255,255,255,0.3);margin-bottom:6px;display:flex;align-items:center;gap:6px}
+    .loc-btn{background:rgba(255,255,255,0.06);border:0.5px solid rgba(255,255,255,0.1);border-radius:20px;padding:4px 12px;font-size:11px;color:rgba(255,255,255,0.4);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.2s}
+    .loc-btn:hover{background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.7)}
     .temp{font-family:'DM Serif Display',serif;font-size:80px;line-height:1;color:#e8eaf0}
     .desc{font-size:15px;color:rgba(255,255,255,0.4);margin-top:6px;font-weight:300;margin-bottom:8px}
     .consensus{font-size:12px;color:rgba(255,255,255,0.2);margin-bottom:20px}
-    .consensus b{color:#5DCAA5;font-weight:400}
+    .consensus b{font-weight:400}
     .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:20px}
     .stat{background:rgba(255,255,255,0.04);border:0.5px solid rgba(255,255,255,0.07);border-radius:10px;padding:12px;text-align:center}
     .stat-val{font-size:18px;font-weight:500}
@@ -44,6 +46,8 @@
     .conf-track{flex:1;height:3px;background:rgba(255,255,255,0.07);border-radius:2px;overflow:hidden}
     .conf-fill{height:100%;border-radius:2px;transition:width 1s ease}
     .conf-val{font-size:12px;width:32px;text-align:right}
+    .loading{padding:60px 24px;text-align:center;color:rgba(255,255,255,0.3);font-size:14px;position:relative;z-index:2}
+    .error{padding:40px 24px;color:rgba(255,255,255,0.4);font-size:14px;position:relative;z-index:2;line-height:1.7}
     footer{padding:12px 20px;border-top:0.5px solid rgba(255,255,255,0.05);display:flex;justify-content:space-between;font-size:11px;color:rgba(255,255,255,0.2);position:relative;z-index:2;flex-wrap:wrap;gap:6px}
     @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
     @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
@@ -69,127 +73,81 @@
     <div class="logo">himmel</div>
     <div class="live"><div class="dot"></div><span id="live-text">live</span></div>
   </nav>
-  <div class="hero">
-    <div class="loc">📍 Malmö, Skåne</div>
-    <div class="temp" id="temp">–°</div>
-    <div class="desc" id="desc">Hämtar väder...</div>
-    <div class="consensus" id="consensus"></div>
-    <div class="stats" id="stats"></div>
-    <div class="section" style="animation-delay:0.1s">
-      <div class="section-label">Timvis idag</div>
-      <div class="hourly" id="hourly"></div>
-    </div>
-    <div class="section" style="animation-delay:0.2s">
-      <div class="section-label">Källor & precision</div>
-      <div class="sources" id="sources"></div>
-    </div>
-    <div class="section" style="animation-delay:0.3s">
-      <div class="section-label">Prognosträffsäkerhet</div>
-      <div id="conf"></div>
-    </div>
-  </div>
+  <div id="main"><div class="loading">Hämtar din position...</div></div>
   <footer>
-    <span id="updated">Uppdaterar...</span>
+    <span id="updated"></span>
     <span>ECMWF · DWD · Met Norway</span>
   </footer>
 
   <script>
     const WMO={0:"Klart",1:"Mest klart",2:"Delvis molnigt",3:"Mulet",45:"Dimma",51:"Duggregn",61:"Regn",63:"Regn",65:"Kraftigt regn",71:"Snö",80:"Skurar",95:"Åska"};
     const ICON={0:"☀️",1:"🌤",2:"⛅",3:"☁️",45:"🌫",51:"🌦",61:"🌧",63:"🌧",65:"🌧",71:"❄️",80:"🌦",95:"⛈"};
-    const LAT=55.6059,LON=13.0007;
 
-    function getWeatherType(code, windspeed){
+    function getWeatherType(code,wind){
       if(code>=71&&code<=77) return 'snow';
-      if(code>=61&&code<=67) return 'rain';
-      if(code>=80&&code<=82) return 'rain';
-      if(code===95||code===99) return 'rain';
-      if(code>=51&&code<=57) return 'rain';
-      if(windspeed>10) return 'wind';
+      if((code>=61&&code<=67)||(code>=80&&code<=82)||code===95||code===99||(code>=51&&code<=57)) return 'rain';
+      if(wind>10) return 'wind';
       if(code===0||code===1) return 'sun';
       return 'cloudy';
     }
 
     function makeRain(){
-      const c=document.getElementById('canvas');
-      c.innerHTML='';
-      for(let i=0;i<50;i++){
-        const d=document.createElement('div');
-        d.className='rain-drop';
-        const h=10+Math.random()*20;
-        d.style.cssText=`left:${Math.random()*100}%;top:${Math.random()*-200}px;height:${h}px;animation-duration:${0.5+Math.random()*0.5}s;animation-delay:${Math.random()*2}s`;
-        c.appendChild(d);
-      }
+      const c=document.getElementById('canvas');c.innerHTML='';
+      for(let i=0;i<50;i++){const d=document.createElement('div');d.className='rain-drop';const h=10+Math.random()*20;d.style.cssText=`left:${Math.random()*100}%;top:${Math.random()*-200}px;height:${h}px;animation-duration:${0.5+Math.random()*0.5}s;animation-delay:${Math.random()*2}s`;c.appendChild(d);}
     }
-
     function makeWind(){
-      const c=document.getElementById('canvas');
-      c.innerHTML='';
-      for(let i=0;i<25;i++){
-        const l=document.createElement('div');
-        l.className='wind-line';
-        const w=60+Math.random()*180;
-        l.style.cssText=`top:${Math.random()*100}vh;width:${w}px;animation-duration:${0.8+Math.random()*1}s;animation-delay:${Math.random()*2}s`;
-        c.appendChild(l);
-      }
-      document.getElementById('desc').style.display='inline-block';
-      document.getElementById('desc').style.animation='wind 6s ease-in-out infinite alternate';
+      const c=document.getElementById('canvas');c.innerHTML='';
+      for(let i=0;i<25;i++){const l=document.createElement('div');l.className='wind-line';const w=60+Math.random()*180;l.style.cssText=`top:${Math.random()*100}vh;width:${w}px;animation-duration:${0.8+Math.random()*1}s;animation-delay:${Math.random()*2}s`;c.appendChild(l);}
     }
-
     function makeSnow(){
-      const c=document.getElementById('canvas');
-      c.innerHTML='';
-      for(let i=0;i<45;i++){
-        const s=document.createElement('div');
-        s.className='snow-flake';
-        const sz=2+Math.random()*5;
-        s.style.cssText=`left:${Math.random()*100}%;top:${Math.random()*-150}px;width:${sz}px;height:${sz}px;animation-duration:${2.5+Math.random()*4}s;animation-delay:${Math.random()*4}s`;
-        c.appendChild(s);
-      }
+      const c=document.getElementById('canvas');c.innerHTML='';
+      for(let i=0;i<45;i++){const s=document.createElement('div');s.className='snow-flake';const sz=2+Math.random()*5;s.style.cssText=`left:${Math.random()*100}%;top:${Math.random()*-150}px;width:${sz}px;height:${sz}px;animation-duration:${2.5+Math.random()*4}s;animation-delay:${Math.random()*4}s`;c.appendChild(s);}
     }
-
     function makeSun(){
-      const c=document.getElementById('canvas');
-      c.innerHTML='';
-      const wrap=document.createElement('div');
-      wrap.className='sun-wrap';
+      const c=document.getElementById('canvas');c.innerHTML='';
+      const wrap=document.createElement('div');wrap.className='sun-wrap';
       wrap.innerHTML=`<svg class="sun-rays" viewBox="0 0 100 100">${[0,30,60,90,120,150,180,210,240,270,300,330].map(a=>`<line x1="50" y1="8" x2="50" y2="18" stroke="rgba(239,159,39,0.3)" stroke-width="2" transform="rotate(${a} 50 50)"/>`).join('')}</svg><div class="sun-core"></div>`;
       c.appendChild(wrap);
     }
-
     function makeCloudy(){
-      const c=document.getElementById('canvas');
-      c.innerHTML='';
-      [[160,40,60,0,4],[120,35,120,30,6],[100,30,180,55,8]].forEach(([w,h,top,left,delay])=>{
-        const cl=document.createElement('div');
-        cl.className='cloud-shape';
-        cl.style.cssText=`width:${w}px;height:${h}px;top:${top}px;left:${left}px;animation-duration:${6+delay}s;animation-delay:${delay*0.3}s`;
-        c.appendChild(cl);
-      });
+      const c=document.getElementById('canvas');c.innerHTML='';
+      [[160,40,60,0,4],[120,35,120,30,6],[100,30,180,55,8]].forEach(([w,h,top,left,delay])=>{const cl=document.createElement('div');cl.className='cloud-shape';cl.style.cssText=`width:${w}px;height:${h}px;top:${top}px;left:${left}px;animation-duration:${6+delay}s;animation-delay:${delay*0.3}s`;c.appendChild(cl);});
     }
-
     function applyAnimation(type){
-      document.getElementById('desc').style.animation='';
+      const desc=document.getElementById('desc');
+      if(desc) desc.style.animation='';
       if(type==='rain') makeRain();
-      else if(type==='wind') makeWind();
+      else if(type==='wind'){makeWind();if(desc){desc.style.display='inline-block';desc.style.animation='wind 6s ease-in-out infinite alternate';}}
       else if(type==='snow') makeSnow();
       else if(type==='sun') makeSun();
       else makeCloudy();
     }
 
-    async function fetchModel(model){
-      const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current_weather=true&hourly=temperature_2m,weathercode,precipitation&timezone=Europe/Stockholm&forecast_days=1&models=${model}`);
+    async function fetchModel(model,lat,lon){
+      const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&hourly=temperature_2m,weathercode,precipitation&timezone=auto&forecast_days=1&models=${model}`);
       return r.json();
     }
 
-    async function load(){
+    async function getCity(lat,lon){
+      try{
+        const r=await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=sv`);
+        const d=await r.json();
+        return d.address.city||d.address.town||d.address.village||d.address.municipality||"Din plats";
+      }catch(e){return "Din plats";}
+    }
+
+    async function loadWeather(lat,lon){
+      document.getElementById('main').innerHTML='<div class="loading">Hämtar väder...</div>';
+      const city=await getCity(lat,lon);
+      document.getElementById('live-text').textContent=`live · ${city}`;
+
       const models=[
         {id:"ecmwf_ifs025",name:"ECMWF",color:"#7ab3e8"},
         {id:"dwd_icon_d2",name:"DWD",color:"#5DCAA5"},
         {id:"metno_nordic",name:"Met Norway",color:"#AFA9EC"}
       ];
-      const results=await Promise.allSettled(models.map(m=>fetchModel(m.id)));
-      const temps=[];
-      const sourcesHTML=[];
+      const results=await Promise.allSettled(models.map(m=>fetchModel(m.id,lat,lon)));
+      const temps=[];const sourcesHTML=[];
 
       results.forEach((res,i)=>{
         if(res.status==="fulfilled"&&res.value.current_weather){
@@ -204,37 +162,22 @@
       const spread=Math.max(...temps)-Math.min(...temps);
       const agreement=spread<=1?"Hög":spread<=2?"God":"Måttlig";
       const agreementColor=spread<=1?"#5DCAA5":spread<=2?"#7ab3e8":"#EF9F27";
-
       const first=results.find(r=>r.status==="fulfilled"&&r.value.current_weather);
       const mainCode=first?.value.current_weather.weathercode||2;
       const windspeed=first?.value.current_weather.windspeed||0;
-      const weatherType=getWeatherType(mainCode,windspeed);
 
-      document.getElementById('temp').textContent=avg+"°";
-      document.getElementById('desc').textContent=WMO[mainCode]||"–";
-      document.getElementById('consensus').innerHTML=`Konsensus från ${temps.length} källor · Överensstämmelse: <b style="color:${agreementColor}">${agreement}</b>`;
-      document.getElementById('sources').innerHTML=sourcesHTML.join('');
-      document.getElementById('stats').innerHTML=`
-        <div class="stat"><div class="stat-val">${Math.round(windspeed)} m/s</div><div class="stat-lbl">Vind</div></div>
-        <div class="stat"><div class="stat-val">${spread}°</div><div class="stat-lbl">Modellspread</div></div>
-        <div class="stat"><div class="stat-val">${temps.length}</div><div class="stat-lbl">Källor</div></div>
-      `;
-
-      applyAnimation(weatherType);
-
+      let hourlyHTML='';
       const hourData=first?.value?.hourly;
       if(hourData){
         const now=new Date().getHours();
-        let html='';
         for(let i=0;i<8;i++){
           const idx=now+i;
           const h=new Date(hourData.time[idx]).getHours();
           const t=Math.round(hourData.temperature_2m[idx]);
           const code=hourData.weathercode[idx];
           const rain=hourData.precipitation[idx];
-          html+=`<div class="hcell${i===0?" now":""}"><div class="ht">${i===0?"Nu":h+":00"}</div><div class="hi">${ICON[code]||"🌡"}</div><div class="htemp">${t}°</div>${rain>0?`<div class="hrain">${rain}mm</div>`:""}</div>`;
+          hourlyHTML+=`<div class="hcell${i===0?" now":""}"><div class="ht">${i===0?"Nu":h+":00"}</div><div class="hi">${ICON[code]||"🌡"}</div><div class="htemp">${t}°</div>${rain>0?`<div class="hrain">${rain}mm</div>`:""}</div>`;
         }
-        document.getElementById('hourly').innerHTML=html;
       }
 
       const confData=[
@@ -243,14 +186,56 @@
         {label:"Dag 3–4",pct:Math.max(40,65-spread*10),color:"#EF9F27"},
         {label:"Dag 5–7",pct:40,color:"rgba(255,255,255,0.2)"}
       ];
-      document.getElementById('conf').innerHTML=confData.map(c=>`<div class="conf-row"><div class="conf-label">${c.label}</div><div class="conf-track"><div class="conf-fill" style="width:${c.pct}%;background:${c.color}"></div></div><div class="conf-val" style="color:${c.color}">${c.pct}%</div></div>`).join('');
 
+      document.getElementById('main').innerHTML=`
+        <div class="hero">
+          <div class="loc">📍 ${city} <button class="loc-btn" onclick="askLocation()">Ändra plats</button></div>
+          <div class="temp">${avg}°</div>
+          <div class="desc" id="desc">${WMO[mainCode]||"–"}</div>
+          <div class="consensus">Konsensus från ${temps.length} källor · Överensstämmelse: <b style="color:${agreementColor}">${agreement}</b></div>
+          <div class="stats">
+            <div class="stat"><div class="stat-val">${Math.round(windspeed)} m/s</div><div class="stat-lbl">Vind</div></div>
+            <div class="stat"><div class="stat-val">${spread}°</div><div class="stat-lbl">Modellspread</div></div>
+            <div class="stat"><div class="stat-val">${temps.length}</div><div class="stat-lbl">Källor</div></div>
+          </div>
+          <div class="section" style="animation-delay:0.1s">
+            <div class="section-label">Timvis idag</div>
+            <div class="hourly">${hourlyHTML}</div>
+          </div>
+          <div class="section" style="animation-delay:0.2s">
+            <div class="section-label">Källor & precision</div>
+            <div class="sources">${sourcesHTML.join('')}</div>
+          </div>
+          <div class="section" style="animation-delay:0.3s">
+            <div class="section-label">Prognosträffsäkerhet</div>
+            <div>${confData.map(c=>`<div class="conf-row"><div class="conf-label">${c.label}</div><div class="conf-track"><div class="conf-fill" style="width:${c.pct}%;background:${c.color}"></div></div><div class="conf-val" style="color:${c.color}">${c.pct}%</div></div>`).join('')}</div>
+          </div>
+        </div>`;
+
+      applyAnimation(getWeatherType(mainCode,windspeed));
       document.getElementById('updated').textContent="Uppdaterad "+new Date().toLocaleTimeString("sv-SE",{hour:"2-digit",minute:"2-digit"});
-      document.getElementById('live-text').textContent="live · Malmö";
     }
 
-    load();
-    setInterval(load,3600000);
+    function askLocation(){
+      if(!navigator.geolocation){
+        document.getElementById('main').innerHTML='<div class="error">Din webbläsare stöder inte platsdelning.</div>';
+        return;
+      }
+      document.getElementById('main').innerHTML='<div class="loading">Hämtar din position...</div>';
+      navigator.geolocation.getCurrentPosition(
+        pos=>loadWeather(pos.coords.latitude,pos.coords.longitude),
+        ()=>{
+          document.getElementById('main').innerHTML=`<div class="error">Kunde inte hämta din plats.<br><br><button class="loc-btn" style="font-size:13px;padding:8px 16px" onclick="askLocation()">Försök igen</button></div>`;
+        }
+      );
+    }
+
+    askLocation();
+    setInterval(()=>{
+      if(navigator.geolocation){
+        navigator.geolocation.getCurrentPosition(pos=>loadWeather(pos.coords.latitude,pos.coords.longitude));
+      }
+    },3600000);
   </script>
 </body>
 </html>
