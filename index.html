@@ -303,7 +303,29 @@
         return d.address.city||d.address.town||d.address.village||d.address.municipality||"Din plats";
       }catch(e){return "Din plats";}
     }
+function setCityBackground(city){
 
+    const backgrounds={
+
+        "Malmö":"images/malmo.jpg",
+
+        "Stockholm":"images/stockholm.jpg",
+
+        "Göteborg":"images/goteborg.jpg"
+
+    };
+
+    const image =
+    backgrounds[city]
+    ||
+    "images/default.jpg";
+
+    document
+    .getElementById("city-bg")
+    .style.backgroundImage=
+    `url('${image}')`;
+
+}
     async function loadWeather(lat,lon,cityName){
       document.getElementById('main').innerHTML='<div class="loading">Hämtar väder...</div>';
       const city=cityName||(await getCity(lat,lon));
