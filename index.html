@@ -88,6 +88,65 @@
   <script>
     const WMO={0:"Klart",1:"Mest klart",2:"Delvis molnigt",3:"Mulet",45:"Dimma",51:"Duggregn",61:"Regn",63:"Regn",65:"Kraftigt regn",71:"Snö",80:"Skurar",95:"Åska"};
     const ICON={0:"☀️",1:"🌤",2:"⛅",3:"☁️",45:"🌫",51:"🌦",61:"🌧",63:"🌧",65:"🌧",71:"❄️",80:"🌦",95:"⛈"};
+    function getMoonInfo(){
+
+    const lp = 2551443;
+    const now = new Date();
+    const newMoon = new Date("2000-01-06T18:14:00Z");
+
+    const phase = ((now.getTime() - newMoon.getTime()) / 1000) % lp;
+
+    const age = phase / 86400;
+    const illumination = Math.round(
+        (1 - Math.cos(2 * Math.PI * age / 29.530588853))
+        / 2 * 100
+    );
+
+    let icon = "🌑";
+    let name = "Nymåne";
+
+    if(age < 1.8 || age > 27.7){
+        icon="🌑";
+        name="Nymåne";
+    }
+    else if(age < 7.4){
+        icon="🌒";
+        name="Tilltagande";
+    }
+    else if(age < 9){
+        icon="🌓";
+        name="Första kvarteret";
+    }
+    else if(age < 14.8){
+        icon="🌔";
+        name="Tilltagande";
+    }
+    else if(age < 16.2){
+        icon="🌕";
+        name="Fullmåne";
+    }
+    else if(age < 22){
+        icon="🌖";
+        name="Avtagande";
+    }
+    else if(age < 23.8){
+        icon="🌗";
+        name="Sista kvarteret";
+    }
+    else{
+        icon="🌘";
+        name="Avtagande";
+    }
+
+    let daysToFull = Math.round((14.77 - age + 29.53) % 29.53);
+
+    return {
+        icon,
+        name,
+        illumination,
+        daysToFull
+    };
+}
 
     function getWeatherType(code,wind){
       if(code>=71&&code<=77) return 'snow';
