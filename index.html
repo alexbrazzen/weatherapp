@@ -329,6 +329,7 @@ function setCityBackground(city){
     async function loadWeather(lat,lon,cityName){
       document.getElementById('main').innerHTML='<div class="loading">Hämtar väder...</div>';
       const city=cityName||(await getCity(lat,lon));
+      setCityBackground(city);
       document.getElementById('live-text').textContent=`live · ${city}`;
 
       const models=[
