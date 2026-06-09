@@ -263,6 +263,29 @@
           <div class="loc">📍 ${city} <button class="loc-btn" onclick="askLocation()">Använd min plats</button></div>
           <div class="temp">${avg}°</div>
           <div class="desc" id="desc">${WMO[mainCode]||"–"}</div>
+          <div class="moon-card">
+
+    <div class="moon-big">
+        ${moon.icon}
+    </div>
+
+    <div class="moon-phase">
+        ${moon.name}
+    </div>
+
+    <div class="moon-light">
+        ${moon.illumination}% upplyst
+    </div>
+
+    <div class="moon-next">
+        ${
+        moon.daysToFull === 0
+        ? "🌕 Fullmåne idag"
+        : "Fullmåne om " + moon.daysToFull + " dagar"
+        }
+    </div>
+
+</div>
           <div class="consensus">Konsensus från ${temps.length} källor · Överensstämmelse: <b style="color:${agreementColor}">${agreement}</b></div>
           <div class="stats">
             <div class="stat"><div class="stat-val">${Math.round(windspeed)} m/s</div><div class="stat-lbl">Vind</div></div>
