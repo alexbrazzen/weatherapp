@@ -1,1 +1,89 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>himmel</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0f1117; color: #e8eaf0; font-family: 'DM Sans', sans-serif; min-height: 100vh; }
+    nav { display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; border-bottom: 0.5px solid rgba(255,255,255,0.07); }
+    .logo { font-size: 20px; color: #c5d8f5; font-weight: 300; letter-spacing: 2px; }
+    .live { font-size: 11px; color: rgba(255,255,255,0.25); display: flex; align-items: center; gap: 6px; }
+    .dot { width: 6px; height: 6px; background: #5DCAA5; border-radius: 50%; }
+    .hero { padding: 40px 24px 24px; }
+    .location { font-size: 13px; color: rgba(255,255,255,0.35); margin-bottom: 8px; }
+    .temp { font-size: 80px; line-height: 1; margin-bottom: 8px; }
+    .desc { font-size: 16px; color: rgba(255,255,255,0.45); margin-bottom: 24px; font-weight: 300; }
+    .pills { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 32px; }
+    .pill { background: rgba(255,255,255,0.06); border: 0.5px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 5px 14px; font-size: 12px; color: rgba(255,255,255,0.45); }
+    .section-label { font-size: 11px; color: rgba(255,255,255,0.25); letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 12px; padding-top: 20px; border-top: 0.5px solid rgba(255,255,255,0.06); }
+    .hourly { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 24px; }
+    .hcell { min-width: 60px; background: rgba(255,255,255,0.04); border: 0.5px solid rgba(255,255,255,0.07); border-radius: 10px; padding: 10px 8px; text-align: center; flex-shrink: 0; }
+    .hcell.now { background: rgba(122,179,232,0.12); border-color: rgba(122,179,232,0.3); }
+    .ht { font-size: 11px; color: rgba(255,255,255,0.3); margin-bottom: 6px; }
+    .hi { font-size: 20px; }
+    .htemp { font-size: 14px; font-weight: 500; margin-top: 6px; }
+    .hrain { font-size: 11px; color: #5DCAA5; margin-top: 3px; }
+    footer { padding: 16px 24px; border-top: 0.5px solid rgba(255,255,255,0.06); font-size: 11px; color: rgba(255,255,255,0.2); display: flex; justify-content: space-between; }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="logo">himmel</div>
+    <div class="live"><div class="dot"></div> live</div>
+  </nav>
+  <div class="hero">
+    <div class="location">📍 Malmö, Skåne</div>
+    <div class="temp" id="temp">–°</div>
+    <div class="desc" id="desc">Hämtar väder...</div>
+    <div class="pills" id="pills"></div>
+    <div class="section-label">Timvis idag</div>
+    <div class="hourly" id="hourly"></div>
+  </div>
+  <footer>
+    <span id="updated">Uppdaterar...</span>
+    <span>Källa: Open-Meteo</span>
+  </footer>
 
+  <script>
+    const WMO = {0:"Klart",1:"Mest klart",2:"Delvis molnigt",3:"Mulet",45:"Dimma",51:"Duggregn",61:"Regn",63:"Regn",65:"Kraftigt regn",71:"Snö",80:"Skurar",95:"Åska"};
+    const ICON = {0:"☀️",1:"🌤",2:"⛅",3:"☁️",45:"🌫",51:"🌦",61:"🌧",63:"🌧",65:"🌧",71:"❄️",80:"🌦",95:"⛈"};
+
+    async function load() {
+      const r = await fetch("https://api.open-meteo.com/v1/forecast?latitude=55.6059&longitude=13.0007&hourly=temperature_2m,weathercode,precipitation,windspeed_10m&current_weather=true&timezone=Europe/Stockholm&forecast_days=1");
+      const d = await r.json();
+      const cw = d.current_weather;
+      const now = new Date().getHours();
+
+      document.getElementById("temp").textContent = Math.round(cw.temperature) + "°";
+      document.getElementById("desc").textContent = WMO[cw.weathercode] || "–";
+      document.getElementById("pills").innerHTML = `
+        <div class="pill">💨 ${cw.windspeed} m/s</div>
+        <div class="pill">🕐 Uppdateras varje timme</div>
+      `;
+
+      let html = "";
+      for (let i = 0; i < 8; i++) {
+        const idx = now + i;
+        const h = new Date(d.hourly.time[idx]).getHours();
+        const t = Math.round(d.hourly.temperature_2m[idx]);
+        const code = d.hourly.weathercode[idx];
+        const rain = d.hourly.precipitation[idx];
+        html += `<div class="hcell${i===0?" now":""}">
+          <div class="ht">${i===0?"Nu":h+":00"}</div>
+          <div class="hi">${ICON[code]||"🌡"}</div>
+          <div class="htemp">${t}°</div>
+          ${rain>0?`<div class="hrain">${rain}mm</div>`:""}
+        </div>`;
+      }
+      document.getElementById("hourly").innerHTML = html;
+      document.getElementById("updated").textContent = "Uppdaterad " + new Date().toLocaleTimeString("sv-SE", {hour:"2-digit",minute:"2-digit"});
+    }
+
+    load();
+    setInterval(load, 3600000);
+  </script>
+</body>
+</html>
