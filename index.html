@@ -235,6 +235,7 @@
       const first=results.find(r=>r.status==="fulfilled"&&r.value.current_weather);
       const mainCode=first?.value.current_weather.weathercode||2;
       const windspeed=first?.value.current_weather.windspeed||0;
+      const moon = getMoonInfo();
 
       let hourlyHTML='';
       const hourData=first?.value?.hourly;
